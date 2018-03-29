@@ -1,0 +1,93 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
+    id 'io.spring.dependency-management' version '1.0.4.RELEASE'
+}
+
+ext {
+    github_org = 'Discord4J'
+    project_name = 'gateway-kafka'
+    artifact_group = 'com.discord4j'
+    project_version = '0.1.0-SNAPSHOT'
+    project_description = 'Discord4J gateway exchange to/from reactor-kafka'
+    project_jdk = '1.8'
+
+    reactor_bom_version = 'Bismuth-SR7'
+    junit_version = '4.12'
+    logback_version = '1.2.3'
+}
+
+allprojects {
+    group = artifact_group
+    version = project_version
+
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'io.spring.dependency-management'
+
+    sourceCompatibility = 1.8
+
+    dependencyManagement {
+        imports {
+            mavenBom "io.projectreactor:reactor-bom:$reactor_bom_version"
+        }
+    }
+
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven { url 'https://jitpack.io' }
+    }
+
+    dependencies {
+        compile 'com.github.discord4j.Discord4J:Discord4J-gateway:v3-SNAPSHOT'
+        compile 'io.projectreactor.kafka:reactor-kafka'
+        testCompile "junit:junit:4.12"
+        testCompile "ch.qos.logback:logback-classic:$logback_version"
+    }
+
+    javadoc {
+        options.encoding = 'UTF-8'
+        options.tags = [
+                "apiNote:a:API Note:",
+                "implSpec:a:Implementation Requirements:",
+                "implNote:a:Implementation Note:"
+        ]
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from 'build/docs/javadoc'
+    }
+
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    artifacts {
+        archives jar
+        archives javadocJar
+        archives sourcesJar
+    }
+
+    publishing {
+        publications {
+            gatewayKafka(MavenPublication) {
+                artifactId 'gateway-kafka'
+
+                from components.java
+
+                artifact sourcesJar
+                artifact javadocJar
+            }
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.6'
+    distributionUrl = 'https://services.gradle.org/distributions/gradle-4.6-all.zip'
+}
